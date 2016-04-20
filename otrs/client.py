@@ -1,7 +1,7 @@
 try:
     import urllib.request as urllib2
 except ImportError:
-    import urllib2
+    import urllib.request, urllib.error, urllib.parse
 from posixpath import join as urljoin
 import xml.etree.ElementTree as etree
 from .objects import Ticket, OTRSObject, DynamicField, extract_tagname
@@ -131,14 +131,14 @@ class GenericTicketConnector(object):
                 e.text = str(v)
                 xml_req_root.append(e)
 
-        request = urllib2.Request(
+        request = urllib.request.Request(
             self.endpoint, self._pack_req(xml_req_root),
             {'Content-Type': 'text/xml;charset=utf-8'})
 
         if (sys.version_info[0] == 3 and sys.version_info < (3,4,3)) or sys.version_info < (2,7,9):
-            fd = urllib2.urlopen(request)
+            fd = urllib.request.urlopen(request)
         else:
-            fd = urllib2.urlopen(request, context=self.ssl_context)
+            fd = urllib.request.urlopen(request, context=self.ssl_context)
 
         if fd.getcode() != 200:
             raise OTRSError(fd)
@@ -153,9 +153,9 @@ class GenericTicketConnector(object):
                 return e
             except etree.ParseError:
                 print('error parsing:')
-                print('-' * 80)
+                print(('-' * 80))
                 print(s)
-                print('-' * 80)
+                print(('-' * 80))
                 raise
 
     @staticmethod

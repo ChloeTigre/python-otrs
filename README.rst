@@ -118,3 +118,10 @@ Many options are possible with requests, you can use all the options
 available in `official documentation`_.
 
 .. _official documentation: http://otrs.github.io/doc/manual/admin/4.0/en/html/genericinterface.html#generic-ticket-connector
+
+
+What's been done
+----------------
+
+Ported to python3 (tested with python3.4)
+Blame @ChloeTigre

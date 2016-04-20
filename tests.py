@@ -9,7 +9,7 @@ REQUIRED_VARS = 'OTRS_LOGIN', 'OTRS_PASSWORD', 'OTRS_SERVER', 'OTRS_WEBSERVICE'
 MISSING_VARS = []
 
 for i in REQUIRED_VARS:
-    if not i in os.environ.keys():
+    if i not in os.environ:
         MISSING_VARS.append(i)
     else:
         (locals())[i] = os.environ[i]

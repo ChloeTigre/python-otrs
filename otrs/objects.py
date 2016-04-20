@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+
 import xml.etree.ElementTree as etree
 import os
 import base64
