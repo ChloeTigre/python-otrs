@@ -1,3 +1,3 @@
-__author__ = 'Jocelyn Delalande'
-__email__ = 'jdelalande@oasiswork.fr'
-__version__ = '0.1.0'
+__author__ = 'Jocelyn Delalande, Chloé Desoutter'
+__email__ = 'jdelalande@oasiswork.fr, cde@nbs-system.com'
+__version__ = '0.1.1'

@@ -1,7 +1,5 @@
-try:
-    import urllib.request as urllib2
-except ImportError:
-    import urllib.request, urllib.error, urllib.parse
+import urllib
+import urllib.request, urllib.error, urllib.parse
 from posixpath import join as urljoin
 import xml.etree.ElementTree as etree
 from .objects import Ticket, OTRSObject, DynamicField, extract_tagname
@@ -74,12 +72,7 @@ SOAP_ENVELOPPE = """
 """
 
 
-class GenericTicketConnector(object):
-    """ Client for the GenericTicketConnector SOAP API
-
-    see http://otrs.github.io/doc/manual/admin/3.3/en/html/genericinterface.html
-    """
-
+class OTRSConnector(object):
     def __init__(self, server, webservice_name='GenericTicketConnector', ssl_context=None):
         """ @param server : the http(s) URL of the root installation of OTRS
                             (e.g: https://tickets.example.net)
@@ -184,7 +177,7 @@ class GenericTicketConnector(object):
         return SOAP_ENVELOPPE.format(codecs.decode(etree.tostring(element),'utf-8')).encode('utf-8')
 
     def session_create(self, password, user_login=None,
-                                       customer_user_login=None):
+                       customer_user_login=None):
         """ Logs the user or customeruser in
 
         @returns the session_id
@@ -215,6 +208,13 @@ class GenericTicketConnector(object):
         self.session_id = self.session_create(
             password=password,
             customer_user_login=user)
+
+
+class GenericTicketConnector(OTRSConnector):
+    """ Client for the GenericTicketConnector SOAP API
+
+    see http://otrs.github.io/doc/manual/admin/3.3/en/html/genericinterface.html
+    """
 
     @authenticated
     def ticket_get(self, ticket_id, get_articles=False,
@@ -297,16 +297,22 @@ class GenericTicketConnector(object):
         dynamic_field_requirements = ('Name', 'Value')
         attachment_field_requirements = ('Content', 'ContentType', 'Filename')
         ticket.check_fields(ticket_requirements)
-        article.check_fields(article_requirements)
+        if article:
+            article.check_fields(article_requirements)
         if not (dynamic_fields is None):
             for df in dynamic_fields:
                 df.check_fields(dynamic_field_requirements)
         if not (attachments is None):
             for att in attachments:
                 att.check_fields(attachment_field_requirements)
-        ret = self.req('TicketCreate', ticket=ticket, article=article,
-                       dynamic_fields=dynamic_fields,
-                       attachments=attachments, **kwargs)
+        if article:
+            ret = self.req('TicketCreate', ticket=ticket, article=article,
+                           dynamic_fields=dynamic_fields,
+                           attachments=attachments, **kwargs)
+        else:
+            ret = self.req('TicketCreate', ticket=ticket,
+                           dynamic_fields=dynamic_fields,
+                           **kwargs)
         elements = self._unpack_resp_several(ret)
         infos = {extract_tagname(i): int(i.text) for i in elements}
         return infos['TicketID'], infos['TicketNumber']
@@ -356,3 +362,33 @@ class GenericTicketConnector(object):
         elements = self._unpack_resp_several(ret)
         infos = {extract_tagname(i): int(i.text) for i in elements}
         return infos['TicketID'], infos['TicketNumber']
+
+
+class FutureConnectorIDontKnowItsNameYet(OTRSConnector):
+    """Interface to connector that allows to perform ticket state transitions
+    as a Web Service"""
+    @authenticated
+    def article_send(self, ticket_id=None, ticket_number=None,
+                     article=None, attachments=None,
+                     **kwargs):
+        """
+        @param ticket_id the ticket ID of the ticket to modify
+        @param ticket_number the ticket Number of the ticket to modify
+        @param ticket a ticket containing the fields to change on ticket
+        @param article a new Article to append to the ticket
+        @param attachments a list of Attachments for a newly appended article
+        @returns the ticketID, TicketNumber
+
+
+        Mandatory : `ticket_id` xor `ticket_number`
+        """
+        if not (ticket_id is None):
+            kwargs['TicketID'] = ticket_id
+        elif not (ticket_number is None):
+            kwargs['TicketNumber'] = ticket_number
+        else:
+            raise ValueError('requires either ticket_id or ticket_number')
+        if article is None:
+            raise ValueError('requires an article')
+        kwargs.update(article.attrs)
+        # XXX: finish this

@@ -14,8 +14,8 @@ class OTRSObject(object):
     CHILD_MAP = {}
 
     def __init__(self, *args, **kwargs):
-        self.attrs = kwargs
-        self.childs = {}
+        self.__dict__['attrs'] = kwargs or {}
+        self.__dict__['childs'] = {}
 
     def __getattr__(self, k):
         """ attrs are simple xml child tags (<tag>val</tag>), complex children,
@@ -24,6 +24,9 @@ class OTRSObject(object):
         @returns a simple type
         """
         return autocast(self.attrs[k])
+
+    def __setattr__(self, key, value):
+        self.attrs[key] = value
 
     @classmethod
     def from_xml(cls, xml_element):
